@@ -1,0 +1,141 @@
+openapi: 3.0.0
+info:
+  title: CAB System - Driver API
+  version: 1.0.0
+  description: API cho tài xế.
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/drivers/profile:
+    put:
+      summary: Cập nhật hồ sơ tài xế
+      tags: [Driver]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriverProfile'
+      responses:
+        '200': { description: Cập nhật thành công }
+  /api/drivers/vehicle:
+    put:
+      summary: Cập nhật thông tin phương tiện
+      tags: [Driver]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Vehicle'
+      responses:
+        '200': { description: Cập nhật thành công }
+  /api/drivers/status:
+    put:
+      summary: Cập nhật trạng thái hoạt động
+      tags: [Driver]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriverStatus'
+      responses:
+        '200': { description: Cập nhật thành công }
+  /api/drivers/location:
+    post:
+      summary: Cập nhật vị trí
+      tags: [Driver]
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Location'
+      responses:
+        '200': { description: Vị trí được lưu }
+  /api/trips/{tripId}/driver-response:
+    post:
+      summary: Chấp nhận hoặc từ chối chuyến
+      tags: [Driver]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriverResponse'
+      responses:
+        '200': { description: Đã ghi nhận phản hồi }
+  /api/trips/{tripId}/status:
+    put:
+      summary: Cập nhật trạng thái chuyến
+      tags: [Driver]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripStatusUpdate'
+      responses:
+        '200': { description: Cập nhật thành công }
+components:
+  schemas:
+    DriverProfile:
+      type: object
+      properties:
+        name: { type: string }
+        phone: { type: string }
+    Vehicle:
+      type: object
+      properties:
+        vehicleId: { type: string }
+        vehicleTypeId: { type: string }
+        information: { type: string }
+    DriverStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [AVAILABLE, UNAVAILABLE]
+    Location:
+      type: object
+      required: [latitude, longitude]
+      properties:
+        latitude: { type: number, format: double }
+        longitude: { type: number, format: double }
+    DriverResponse:
+      type: object
+      required: [decision]
+      properties:
+        decision:
+          type: string
+          enum: [ACCEPT, REJECT]
+    TripStatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ARRIVED, PICKED_UP, IN_PROGRESS, COMPLETED]
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
