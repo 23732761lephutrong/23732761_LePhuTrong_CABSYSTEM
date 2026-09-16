@@ -1,0 +1,131 @@
+openapi: 3.0.3
+info:
+  title: CAB System API - FR29 Driver Registration
+  version: 1.0.0
+  description: |
+    Đặc tả API cho FR29 - Đăng ký tài khoản tài xế (do Nhân viên vận hành tạo).
+    Nhân viên vận hành tạo tài khoản tài xế và gắn phương tiện.
+
+paths:
+  /api/v1/admin/drivers:
+    post:
+      summary: FR29 - Tạo tài khoản tài xế
+      description: |
+        API cho phép nhân viên vận hành tạo tài khoản tài xế mới.
+      operationId: createDriver
+      tags:
+        - Admin
+        - Driver
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fullName
+                - phoneNumber
+                - password
+              properties:
+                fullName:
+                  type: string
+                  example: "Tran Van B"
+                phoneNumber:
+                  type: string
+                  pattern: '^[0-9]{10,11}$'
+                  example: "0912345678"
+                email:
+                  type: string
+                  format: email
+                  example: "tranvanb@example.com"
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                  example: "Driver@123"
+      responses:
+        '201':
+          description: Tạo tài khoản tài xế thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Tạo tài khoản tài xế thành công."
+                  data:
+                    type: object
+                    properties:
+                      driverId:
+                        type: integer
+                        example: 2001
+                      fullName:
+                        type: string
+                      phoneNumber:
+                        type: string
+                      status:
+                        type: string
+                        example: "ACTIVE"
+                      createdAt:
+                        type: string
+                        format: date-time
+        '400':
+          description: Dữ liệu đầu vào không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Chưa đăng nhập hoặc token không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Không có quyền.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Số điện thoại hoặc email đã tồn tại.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Lỗi nội bộ hệ thống.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        errorCode:
+          type: string
+          example: "PHONE_NUMBER_ALREADY_EXISTS"
+        message:
+          type: string
+          example: "Số điện thoại đã được đăng ký."
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-09-16T15:48:00Z"
