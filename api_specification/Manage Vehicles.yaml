@@ -1,0 +1,211 @@
+openapi: 3.0.3
+info:
+  title: CAB System API - FR18 Manage Vehicles
+  version: 1.0.0
+  description: |
+    Đặc tả API cho FR18 - Quản lý phương tiện (dành cho Nhân viên vận hành).
+    Nhân viên có thể thêm, xem và cập nhật thông tin phương tiện.
+
+paths:
+  /api/v1/admin/vehicles:
+    get:
+      summary: FR18 - Lấy danh sách phương tiện
+      description: |
+        API cho phép nhân viên vận hành xem danh sách phương tiện.
+      operationId: getVehicles
+      tags:
+        - Admin
+        - Vehicle
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: driverId
+          in: query
+          schema:
+            type: integer
+          description: Lọc theo tài xế.
+      responses:
+        '200':
+          description: Lấy danh sách phương tiện thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        example: 95
+                      vehicles:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            vehicleId:
+                              type: integer
+                              example: 3001
+                            driverId:
+                              type: integer
+                              example: 2001
+                            driverName:
+                              type: string
+                              example: "Tran Van B"
+                            licensePlate:
+                              type: string
+                              example: "51A-12345"
+                            brand:
+                              type: string
+                              example: "Toyota"
+                            model:
+                              type: string
+                              example: "Vios"
+                            vehicleType:
+                              type: string
+                              example: "Xe 4 chỗ"
+                            status:
+                              type: string
+                              example: "ACTIVE"
+        '401':
+          description: Chưa đăng nhập hoặc token không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Không có quyền truy cập chức năng quản trị.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Lỗi nội bộ hệ thống.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: FR18 - Thêm phương tiện mới
+      description: API thêm phương tiện mới và gắn với tài xế.
+      operationId: createVehicle
+      tags:
+        - Admin
+        - Vehicle
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - driverId
+                - vehicleTypeId
+                - licensePlate
+              properties:
+                driverId:
+                  type: integer
+                  example: 2001
+                vehicleTypeId:
+                  type: integer
+                  example: 2
+                licensePlate:
+                  type: string
+                  example: "51A-12345"
+                brand:
+                  type: string
+                  example: "Toyota"
+                model:
+                  type: string
+                  example: "Vios"
+      responses:
+        '201':
+          description: Thêm phương tiện thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Thêm phương tiện thành công."
+                  data:
+                    type: object
+                    properties:
+                      vehicleId:
+                        type: integer
+                        example: 3001
+        '400':
+          description: Dữ liệu đầu vào không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Chưa đăng nhập hoặc token không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Không có quyền truy cập.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Biển số xe đã tồn tại.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Lỗi nội bộ hệ thống.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        errorCode:
+          type: string
+          example: "LICENSE_PLATE_ALREADY_EXISTS"
+        message:
+          type: string
+          example: "Biển số xe đã được đăng ký trong hệ thống."
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-09-16T15:37:00Z"
