@@ -1,0 +1,212 @@
+openapi: 3.0.3
+info:
+  title: CAB System API - FR10 Payment
+  version: 1.0.0
+  description: |
+    Đặc tả API cho FR10 - Thanh toán chuyến xe.
+    Hỗ trợ thanh toán tiền mặt và thanh toán điện tử (mô phỏng).
+
+paths:
+  /api/v1/payments:
+    post:
+      summary: FR10 - Thanh toán chuyến xe
+      description: |
+        API cho phép khách hàng thanh toán chuyến bằng tiền mặt 
+        hoặc thanh toán điện tử.
+      operationId: createPayment
+      tags:
+        - Payment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tripId
+                - paymentMethod
+                - amount
+              properties:
+                tripId:
+                  type: integer
+                  example: 5001
+                paymentMethod:
+                  type: string
+                  enum: [CASH, ELECTRONIC]
+                  description: Phương thức thanh toán.
+                  example: "ELECTRONIC"
+                amount:
+                  type: number
+                  example: 85000
+                transactionCode:
+                  type: string
+                  description: Mã giao dịch (chỉ dùng khi thanh toán điện tử).
+                  example: "TXN202609161525001"
+      responses:
+        '201':
+          description: Tạo yêu cầu thanh toán thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Yêu cầu thanh toán đã được tạo."
+                  data:
+                    type: object
+                    properties:
+                      paymentId:
+                        type: integer
+                        example: 8001
+                      tripId:
+                        type: integer
+                        example: 5001
+                      paymentMethod:
+                        type: string
+                        example: "ELECTRONIC"
+                      amount:
+                        type: number
+                        example: 85000
+                      paymentStatus:
+                        type: string
+                        enum: [PENDING, SUCCESS, FAILED]
+                        example: "PENDING"
+                      paymentUrl:
+                        type: string
+                        description: URL thanh toán (chỉ có khi ELECTRONIC).
+                        example: "https://payment-gateway.example.com/pay/8001"
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2026-09-16T15:25:00Z"
+        '400':
+          description: Dữ liệu đầu vào không hợp lệ hoặc số tiền không khớp.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Chưa đăng nhập hoặc token không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy chuyến.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Chuyến đã được thanh toán trước đó.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Lỗi nội bộ hệ thống.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/payments/{paymentId}/confirm-cash:
+    post:
+      summary: FR10 - Xác nhận thanh toán tiền mặt
+      description: |
+        Tài xế xác nhận đã nhận tiền mặt từ khách hàng.
+      operationId: confirmCashPayment
+      tags:
+        - Payment
+        - Driver
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 8001
+      responses:
+        '200':
+          description: Xác nhận thanh toán tiền mặt thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Đã ghi nhận thanh toán tiền mặt."
+                  data:
+                    type: object
+                    properties:
+                      paymentId:
+                        type: integer
+                        example: 8001
+                      paymentStatus:
+                        type: string
+                        example: "SUCCESS"
+                      confirmedAt:
+                        type: string
+                        format: date-time
+                        example: "2026-09-16T15:26:00Z"
+        '400':
+          description: Phương thức thanh toán không phải tiền mặt hoặc đã xác nhận trước đó.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Chưa đăng nhập hoặc token không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy thanh toán.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Lỗi nội bộ hệ thống.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        errorCode:
+          type: string
+          example: "PAYMENT_ALREADY_COMPLETED"
+        message:
+          type: string
+          example: "Chuyến này đã được thanh toán trước đó."
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-09-16T15:25:00Z"
