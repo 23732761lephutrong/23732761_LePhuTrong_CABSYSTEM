@@ -1,0 +1,145 @@
+openapi: 3.0.3
+info:
+  title: CAB System API - FR23 Manage Vehicle Types
+  version: 1.0.0
+  description: |
+    Đặc tả API cho FR23 - Quản lý loại xe.
+    Hệ thống hỗ trợ nhiều loại xe (Xe máy, Xe 4 chỗ, Xe 7 chỗ...).
+
+paths:
+  /api/v1/vehicle-types:
+    get:
+      summary: FR23 - Lấy danh sách loại xe
+      description: |
+        API lấy danh sách các loại xe đang được hỗ trợ trong hệ thống.
+      operationId: getVehicleTypes
+      tags:
+        - VehicleType
+      responses:
+        '200':
+          description: Lấy danh sách loại xe thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        vehicleTypeId:
+                          type: integer
+                          example: 1
+                        typeName:
+                          type: string
+                          example: "Xe 4 chỗ"
+                        description:
+                          type: string
+                          example: "Xe sedan 4 chỗ ngồi"
+                        baseFare:
+                          type: number
+                          example: 15000
+        '500':
+          description: Lỗi nội bộ hệ thống.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/admin/vehicle-types:
+    post:
+      summary: FR23 - Thêm loại xe mới (Admin)
+      description: API thêm loại xe mới vào hệ thống.
+      operationId: createVehicleType
+      tags:
+        - Admin
+        - VehicleType
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - typeName
+              properties:
+                typeName:
+                  type: string
+                  example: "Xe 7 chỗ"
+                description:
+                  type: string
+                  example: "Xe MPV 7 chỗ ngồi"
+                baseFare:
+                  type: number
+                  example: 25000
+      responses:
+        '201':
+          description: Thêm loại xe thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      vehicleTypeId:
+                        type: integer
+                        example: 3
+        '400':
+          description: Dữ liệu đầu vào không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Chưa đăng nhập hoặc token không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Không có quyền.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Lỗi nội bộ hệ thống.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        errorCode:
+          type: string
+          example: "INVALID_INPUT"
+        message:
+          type: string
+          example: "Tên loại xe không được để trống."
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-09-16T15:42:00Z"
