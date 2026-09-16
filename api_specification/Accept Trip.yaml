@@ -1,0 +1,124 @@
+openapi: 3.0.3
+info:
+  title: CAB System API - FR05 Accept Trip
+  version: 1.0.0
+  description: |
+    Đặc tả API cho FR05 - Tài xế chấp nhận chuyến.
+    Khi tài xế Accept, hệ thống gán tài xế vào chuyến 
+    và cập nhật trạng thái chuyến thành DriverAccepted.
+
+paths:
+  /api/v1/assignments/{assignmentId}/accept:
+    post:
+      summary: FR05 - Tài xế chấp nhận chuyến
+      description: |
+        API cho phép tài xế chấp nhận yêu cầu chuyến được gửi đến.
+        Hệ thống gán tài xế vào chuyến và cập nhật trạng thái.
+      operationId: acceptTrip
+      tags:
+        - Assignment
+        - Driver
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: assignmentId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 3001
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                driverId:
+                  type: integer
+                  description: Mã tài xế đang thực hiện Accept (để xác nhận).
+                  example: 2001
+      responses:
+        '200':
+          description: Chấp nhận chuyến thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Bạn đã nhận chuyến thành công."
+                  data:
+                    type: object
+                    properties:
+                      tripId:
+                        type: integer
+                        example: 5001
+                      driverId:
+                        type: integer
+                        example: 2001
+                      tripStatus:
+                        type: string
+                        example: "DriverAccepted"
+                      acceptedAt:
+                        type: string
+                        format: date-time
+                        example: "2026-09-16T15:20:00Z"
+        '400':
+          description: Dữ liệu đầu vào không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Chưa đăng nhập hoặc token không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Chuyến đã được gán cho tài xế khác hoặc hết hiệu lực.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '410':
+          description: Yêu cầu đã hết thời gian phản hồi (Timeout).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Lỗi nội bộ hệ thống.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        errorCode:
+          type: string
+          example: "ASSIGNMENT_ALREADY_TAKEN"
+        message:
+          type: string
+          example: "Chuyến đã được tài xế khác nhận."
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-09-16T15:20:00Z"
