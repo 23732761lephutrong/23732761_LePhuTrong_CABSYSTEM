@@ -1,0 +1,69 @@
+openapi: 3.0.3
+info:
+  title: CAB System API - FR27 Logout
+  version: 1.0.0
+  description: |
+    Đặc tả API cho FR27 - Đăng xuất.
+    Hủy token hiện tại của người dùng.
+
+paths:
+  /api/v1/auth/logout:
+    post:
+      summary: FR27 - Đăng xuất
+      description: |
+        API đăng xuất và vô hiệu hóa access token hiện tại.
+      operationId: logout
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Đăng xuất thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Đăng xuất thành công."
+        '401':
+          description: Token không hợp lệ hoặc đã hết hạn.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Lỗi nội bộ hệ thống.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        errorCode:
+          type: string
+          example: "UNAUTHORIZED"
+        message:
+          type: string
+          example: "Token không hợp lệ."
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-09-16T15:46:00Z"
