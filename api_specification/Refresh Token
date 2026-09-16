@@ -1,0 +1,90 @@
+openapi: 3.0.3
+info:
+  title: CAB System API - FR30 Refresh Token
+  version: 1.0.0
+  description: |
+    Đặc tả API cho FR30 - Làm mới Access Token.
+    Sử dụng Refresh Token để lấy Access Token mới khi hết hạn.
+
+paths:
+  /api/v1/auth/refresh:
+    post:
+      summary: FR30 - Làm mới Access Token
+      description: |
+        API sử dụng Refresh Token để lấy Access Token mới.
+      operationId: refreshToken
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+                  description: Refresh token được cấp khi đăng nhập.
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        '200':
+          description: Làm mới token thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      tokenType:
+                        type: string
+                        example: "Bearer"
+                      expiresIn:
+                        type: integer
+                        example: 3600
+        '400':
+          description: Refresh token không hợp lệ hoặc thiếu.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Refresh token đã hết hạn hoặc bị thu hồi.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Lỗi nội bộ hệ thống.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        errorCode:
+          type: string
+          example: "INVALID_REFRESH_TOKEN"
+        message:
+          type: string
+          example: "Refresh token không hợp lệ hoặc đã hết hạn."
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-09-16T15:49:00Z"
