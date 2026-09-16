@@ -1,0 +1,140 @@
+openapi: 3.0.3
+info:
+  title: CAB System API - FR03 Create Trip
+  version: 1.0.0
+  description: |
+    Đặc tả API cho FR03 - Đặt chuyến xe.
+    API cho phép khách hàng đã đăng nhập tạo yêu cầu đặt xe 
+    bằng cách cung cấp điểm đón, điểm đến và loại xe.
+
+paths:
+  /api/v1/trips:
+    post:
+      summary: FR03 - Đặt chuyến xe
+      description: |
+        API cho phép khách hàng tạo yêu cầu đặt một chuyến xe.
+        Hệ thống kiểm tra thông tin, tạo chuyến và chuyển sang 
+        trạng thái Searching (đang tìm tài xế).
+      operationId: createTrip
+      tags:
+        - Trip
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - pickupLocation
+                - destination
+                - vehicleTypeId
+              properties:
+                pickupLocation:
+                  type: string
+                  description: Địa chỉ điểm đón.
+                  example: "123 Nguyễn Huệ, Quận 1, TP.HCM"
+                pickupLatitude:
+                  type: number
+                  format: float
+                  example: 10.7769
+                pickupLongitude:
+                  type: number
+                  format: float
+                  example: 106.7009
+                destination:
+                  type: string
+                  description: Địa chỉ điểm đến.
+                  example: "456 Lê Lợi, Quận 3, TP.HCM"
+                destinationLatitude:
+                  type: number
+                  format: float
+                  example: 10.7829
+                destinationLongitude:
+                  type: number
+                  format: float
+                  example: 106.7000
+                vehicleTypeId:
+                  type: integer
+                  description: Mã loại xe (1 = Xe máy, 2 = Xe 4 chỗ, 3 = Xe 7 chỗ...).
+                  example: 2
+      responses:
+        '201':
+          description: Tạo chuyến thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Yêu cầu đặt xe đã được tiếp nhận."
+                  data:
+                    type: object
+                    properties:
+                      tripId:
+                        type: integer
+                        example: 5001
+                      tripStatus:
+                        type: string
+                        example: "Searching"
+                      requestTime:
+                        type: string
+                        format: date-time
+                        example: "2026-09-16T15:12:00Z"
+                      pickupLocation:
+                        type: string
+                        example: "123 Nguyễn Huệ, Quận 1, TP.HCM"
+                      destination:
+                        type: string
+                        example: "456 Lê Lợi, Quận 3, TP.HCM"
+                      vehicleTypeId:
+                        type: integer
+                        example: 2
+        '400':
+          description: Dữ liệu đầu vào không hợp lệ (thiếu điểm đón/điểm đến/loại xe, tọa độ sai).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Chưa đăng nhập hoặc token không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Lỗi nội bộ hệ thống.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        errorCode:
+          type: string
+          example: "MISSING_REQUIRED_FIELDS"
+        message:
+          type: string
+          example: "Vui lòng cung cấp đầy đủ điểm đón, điểm đến và loại xe."
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-09-16T15:12:00Z"
