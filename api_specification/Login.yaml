@@ -1,0 +1,125 @@
+openapi: 3.0.3
+info:
+  title: CAB System API - FR02 Login
+  version: 1.0.0
+  description: |
+    Đặc tả API cho FR02 - Đăng nhập hệ thống.
+    API cho phép Khách hàng, Tài xế hoặc Nhân viên vận hành 
+    đăng nhập bằng số điện thoại và mật khẩu.
+
+paths:
+  /api/v1/auth/login:
+    post:
+      summary: FR02 - Đăng nhập
+      description: |
+        API cho phép người dùng đăng nhập vào hệ thống.
+        Hệ thống xác thực thông tin và trả về access token 
+        cùng thông tin vai trò của người dùng.
+      operationId: login
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - phoneNumber
+                - password
+              properties:
+                phoneNumber:
+                  type: string
+                  pattern: '^[0-9]{10,11}$'
+                  description: Số điện thoại đã đăng ký.
+                  example: "0901234567"
+                password:
+                  type: string
+                  format: password
+                  description: Mật khẩu của tài khoản.
+                  example: "Customer@123"
+      responses:
+        '200':
+          description: Đăng nhập thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Đăng nhập thành công."
+                  data:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      tokenType:
+                        type: string
+                        example: "Bearer"
+                      expiresIn:
+                        type: integer
+                        example: 3600
+                      user:
+                        type: object
+                        properties:
+                          userId:
+                            type: integer
+                            example: 1001
+                          fullName:
+                            type: string
+                            example: "Nguyen Van A"
+                          phoneNumber:
+                            type: string
+                            example: "0901234567"
+                          role:
+                            type: string
+                            enum: [CUSTOMER, DRIVER, OPERATIONS_STAFF]
+                            example: "CUSTOMER"
+        '400':
+          description: Dữ liệu đầu vào không hợp lệ (thiếu trường bắt buộc, định dạng số điện thoại sai).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Số điện thoại hoặc mật khẩu không đúng.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Tài khoản đã bị khóa.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Lỗi nội bộ hệ thống.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        errorCode:
+          type: string
+          example: "INVALID_CREDENTIALS"
+        message:
+          type: string
+          example: "Số điện thoại hoặc mật khẩu không đúng."
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-09-16T15:11:00Z"
