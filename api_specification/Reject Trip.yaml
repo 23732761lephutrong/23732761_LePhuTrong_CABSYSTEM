@@ -1,0 +1,119 @@
+openapi: 3.0.3
+info:
+  title: CAB System API - FR06 Reject Trip
+  version: 1.0.0
+  description: |
+    Đặc tả API cho FR06 - Tài xế từ chối chuyến hoặc hết thời gian phản hồi.
+    Hệ thống ghi nhận từ chối và tiếp tục tìm tài xế khác.
+
+paths:
+  /api/v1/assignments/{assignmentId}/reject:
+    post:
+      summary: FR06 - Tài xế từ chối chuyến
+      description: |
+        API cho phép tài xế từ chối yêu cầu chuyến.
+        Hệ thống ghi nhận lý do (nếu có) và chuyển sang tìm tài xế khác.
+      operationId: rejectTrip
+      tags:
+        - Assignment
+        - Driver
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: assignmentId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 3001
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Lý do từ chối (không bắt buộc).
+                  example: "Đang bận việc khác"
+                isTimeout:
+                  type: boolean
+                  default: false
+                  description: true nếu hệ thống tự đánh dấu hết thời gian phản hồi.
+      responses:
+        '200':
+          description: Từ chối chuyến thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Bạn đã từ chối chuyến. Hệ thống sẽ tìm tài xế khác."
+                  data:
+                    type: object
+                    properties:
+                      assignmentId:
+                        type: integer
+                        example: 3001
+                      assignmentStatus:
+                        type: string
+                        enum: [REJECTED, TIMEOUT]
+                        example: "REJECTED"
+                      rejectedAt:
+                        type: string
+                        format: date-time
+                        example: "2026-09-16T15:21:00Z"
+        '400':
+          description: Dữ liệu đầu vào không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Chưa đăng nhập hoặc token không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy assignment tương ứng.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Lỗi nội bộ hệ thống.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        errorCode:
+          type: string
+          example: "ASSIGNMENT_NOT_FOUND"
+        message:
+          type: string
+          example: "Không tìm thấy yêu cầu chuyến."
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-09-16T15:21:00Z"
