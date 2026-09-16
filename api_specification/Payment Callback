@@ -1,0 +1,95 @@
+openapi: 3.0.3
+info:
+  title: CAB System API - FR25 Payment Callback
+  version: 1.0.0
+  description: |
+    Đặc tả API cho FR25 - Nhận kết quả thanh toán điện tử (Webhook).
+    Endpoint callback từ nhà cung cấp thanh toán.
+
+paths:
+  /api/v1/payments/callback:
+    post:
+      summary: FR25 - Nhận kết quả thanh toán từ nhà cung cấp
+      description: |
+        Webhook endpoint để nhận kết quả giao dịch từ cổng thanh toán.
+        Không yêu cầu Bearer token (sử dụng signature verification).
+      operationId: paymentCallback
+      tags:
+        - Payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - transactionCode
+                - status
+              properties:
+                transactionCode:
+                  type: string
+                  example: "TXN202609161525001"
+                status:
+                  type: string
+                  enum: [SUCCESS, FAILED]
+                  example: "SUCCESS"
+                amount:
+                  type: number
+                  example: 85000
+                paidAt:
+                  type: string
+                  format: date-time
+                signature:
+                  type: string
+                  description: Chữ ký xác thực từ nhà cung cấp.
+      responses:
+        '200':
+          description: Đã nhận và xử lý kết quả thanh toán.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Payment result processed."
+        '400':
+          description: Dữ liệu không hợp lệ hoặc signature sai.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy giao dịch tương ứng.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Lỗi nội bộ hệ thống.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        errorCode:
+          type: string
+          example: "INVALID_SIGNATURE"
+        message:
+          type: string
+          example: "Chữ ký xác thực không hợp lệ."
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-09-16T15:44:00Z"
