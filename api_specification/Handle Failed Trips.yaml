@@ -1,0 +1,128 @@
+openapi: 3.0.3
+info:
+  title: CAB System API - FR21 Handle Failed Trips
+  version: 1.0.0
+  description: |
+    Đặc tả API cho FR21 - Xử lý chuyến bị lỗi (dành cho Nhân viên vận hành).
+    Nhân viên có thể kiểm tra và xử lý các trường hợp chuyến phát sinh lỗi.
+
+paths:
+  /api/v1/admin/trips/{tripId}/resolve:
+    post:
+      summary: FR21 - Xử lý chuyến bị lỗi
+      description: |
+        API cho phép nhân viên vận hành xử lý các chuyến gặp sự cố 
+        (tài xế không đến, khách không có mặt, lỗi hệ thống...).
+      operationId: resolveFailedTrip
+      tags:
+        - Admin
+        - Trip
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 5001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+              properties:
+                action:
+                  type: string
+                  enum: [CANCEL, REASSIGN, COMPLETE_FORCE, MARK_ISSUE]
+                  description: Hành động xử lý.
+                  example: "CANCEL"
+                reason:
+                  type: string
+                  description: Lý do xử lý.
+                  example: "Tài xế không đến điểm đón sau 15 phút"
+                note:
+                  type: string
+                  description: Ghi chú nội bộ.
+      responses:
+        '200':
+          description: Xử lý chuyến thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Chuyến đã được xử lý."
+                  data:
+                    type: object
+                    properties:
+                      tripId:
+                        type: integer
+                      newStatus:
+                        type: string
+                        example: "Cancelled"
+                      resolvedAt:
+                        type: string
+                        format: date-time
+        '400':
+          description: Dữ liệu đầu vào không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Chưa đăng nhập hoặc token không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Không có quyền xử lý chuyến.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy chuyến.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Lỗi nội bộ hệ thống.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        errorCode:
+          type: string
+          example: "TRIP_NOT_FOUND"
+        message:
+          type: string
+          example: "Không tìm thấy chuyến."
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-09-16T15:40:00Z"
