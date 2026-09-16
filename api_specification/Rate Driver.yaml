@@ -1,0 +1,144 @@
+openapi: 3.0.3
+info:
+  title: CAB System API - FR11 Rate Driver
+  version: 1.0.0
+  description: |
+    Đặc tả API cho FR11 - Đánh giá tài xế.
+    Sau khi chuyến hoàn thành, khách hàng có thể đánh giá tài xế 
+    bằng điểm số và nhận xét.
+
+paths:
+  /api/v1/ratings:
+    post:
+      summary: FR11 - Đánh giá tài xế
+      description: |
+        API cho phép khách hàng đánh giá tài xế sau khi chuyến đi hoàn thành.
+        Chỉ được đánh giá một lần cho mỗi chuyến.
+      operationId: rateDriver
+      tags:
+        - Rating
+        - Customer
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tripId
+                - score
+              properties:
+                tripId:
+                  type: integer
+                  description: Mã chuyến đã hoàn thành.
+                  example: 5001
+                score:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  description: Điểm đánh giá từ 1 đến 5.
+                  example: 5
+                comment:
+                  type: string
+                  maxLength: 500
+                  description: Nhận xét về tài xế / chuyến đi (không bắt buộc).
+                  example: "Tài xế rất thân thiện và đúng giờ."
+      responses:
+        '201':
+          description: Đánh giá thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Cảm ơn bạn đã đánh giá tài xế."
+                  data:
+                    type: object
+                    properties:
+                      ratingId:
+                        type: integer
+                        example: 9001
+                      tripId:
+                        type: integer
+                        example: 5001
+                      driverId:
+                        type: integer
+                        example: 2001
+                      score:
+                        type: integer
+                        example: 5
+                      comment:
+                        type: string
+                        example: "Tài xế rất thân thiện và đúng giờ."
+                      ratingTime:
+                        type: string
+                        format: date-time
+                        example: "2026-09-16T15:30:00Z"
+        '400':
+          description: Dữ liệu đầu vào không hợp lệ (điểm ngoài khoảng 1-5, thiếu tripId...).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Chưa đăng nhập hoặc token không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Chỉ khách hàng của chuyến mới được đánh giá.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy chuyến hoặc chuyến chưa hoàn thành.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Chuyến này đã được đánh giá trước đó.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Lỗi nội bộ hệ thống.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        errorCode:
+          type: string
+          example: "TRIP_ALREADY_RATED"
+        message:
+          type: string
+          example: "Bạn đã đánh giá chuyến này rồi."
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-09-16T15:30:00Z"
