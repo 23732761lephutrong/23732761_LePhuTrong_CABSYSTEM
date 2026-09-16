@@ -1,0 +1,130 @@
+openapi: 3.0.3
+info:
+  title: CAB System API - FR09 Calculate Fare
+  version: 1.0.0
+  description: |
+    Đặc tả API cho FR09 - Tính cước chuyến xe.
+    Hệ thống chỉ tính cước khi chuyến đã hoàn thành.
+    Áp dụng quy tắc tính cước cơ bản theo loại xe và khoảng cách.
+
+paths:
+  /api/v1/trips/{tripId}/fare:
+    post:
+      summary: FR09 - Tính cước chuyến xe
+      description: |
+        API tính số tiền khách hàng phải thanh toán 
+        sau khi chuyến hoàn thành.
+      operationId: calculateFare
+      tags:
+        - Fare
+        - Trip
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 5001
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                actualDistance:
+                  type: number
+                  description: Khoảng cách thực tế (km). Nếu không gửi sẽ dùng khoảng cách ước tính.
+                  example: 8.5
+      responses:
+        '200':
+          description: Tính cước thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Đã tính cước chuyến xe."
+                  data:
+                    type: object
+                    properties:
+                      tripId:
+                        type: integer
+                        example: 5001
+                      fareId:
+                        type: integer
+                        example: 7001
+                      baseFare:
+                        type: number
+                        example: 15000
+                      distance:
+                        type: number
+                        example: 8.5
+                      distanceFare:
+                        type: number
+                        example: 70000
+                      fareAmount:
+                        type: number
+                        example: 85000
+                      currency:
+                        type: string
+                        example: "VND"
+                      calculatedAt:
+                        type: string
+                        format: date-time
+                        example: "2026-09-16T15:24:00Z"
+        '400':
+          description: Chuyến chưa hoàn thành hoặc dữ liệu không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Chưa đăng nhập hoặc token không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy chuyến.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Lỗi nội bộ hệ thống.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        errorCode:
+          type: string
+          example: "TRIP_NOT_COMPLETED"
+        message:
+          type: string
+          example: "Chỉ được tính cước khi chuyến đã hoàn thành."
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-09-16T15:24:00Z"
