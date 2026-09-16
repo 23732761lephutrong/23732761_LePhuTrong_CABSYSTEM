@@ -1,0 +1,128 @@
+openapi: 3.0.3
+info:
+  title: CAB System API - FR13 Cancel Trip
+  version: 1.0.0
+  description: |
+    Đặc tả API cho FR13 - Hủy chuyến.
+    Khách hàng hoặc tài xế có thể hủy chuyến theo chính sách của hệ thống.
+
+paths:
+  /api/v1/trips/{tripId}/cancel:
+    post:
+      summary: FR13 - Hủy chuyến
+      description: |
+        API cho phép khách hàng hoặc tài xế hủy chuyến.
+        Hệ thống kiểm tra trạng thái hiện tại và chính sách hủy trước khi cho phép.
+      operationId: cancelTrip
+      tags:
+        - Trip
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 5001
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Lý do hủy chuyến.
+                  example: "Thay đổi kế hoạch"
+                cancelledBy:
+                  type: string
+                  enum: [CUSTOMER, DRIVER]
+                  description: Người thực hiện hủy.
+                  example: "CUSTOMER"
+      responses:
+        '200':
+          description: Hủy chuyến thành công.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Chuyến đã được hủy thành công."
+                  data:
+                    type: object
+                    properties:
+                      tripId:
+                        type: integer
+                        example: 5001
+                      tripStatus:
+                        type: string
+                        example: "Cancelled"
+                      cancelledAt:
+                        type: string
+                        format: date-time
+                        example: "2026-09-16T15:32:00Z"
+                      cancellationFee:
+                        type: number
+                        description: Phí hủy (nếu có).
+                        example: 0
+        '400':
+          description: Không thể hủy chuyến ở trạng thái hiện tại hoặc thiếu thông tin.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Chưa đăng nhập hoặc token không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Không có quyền hủy chuyến này.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy chuyến.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Lỗi nội bộ hệ thống.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        errorCode:
+          type: string
+          example: "CANNOT_CANCEL_IN_CURRENT_STATUS"
+        message:
+          type: string
+          example: "Không thể hủy chuyến khi đang ở trạng thái InProgress."
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-09-16T15:32:00Z"
