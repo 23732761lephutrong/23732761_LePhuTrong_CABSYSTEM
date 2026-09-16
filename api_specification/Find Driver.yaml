@@ -1,0 +1,105 @@
+openapi: 3.0.3
+info:
+  title: CAB System API - FR04 Find Driver
+  version: 1.0.0
+  description: |
+    Đặc tả API cho FR04 - Tìm và phân công tài xế.
+    Hệ thống tự động tìm tài xế phù hợp dựa trên vị trí, 
+    loại xe và trạng thái sẵn sàng.
+
+paths:
+  /api/v1/trips/{tripId}/find-driver:
+    post:
+      summary: FR04 - Tìm và phân công tài xế
+      description: |
+        Hệ thống tìm tài xế phù hợp với chuyến (loại xe + vị trí gần + sẵn sàng),
+        gửi yêu cầu nhận chuyến và chờ phản hồi.
+      operationId: findDriver
+      tags:
+        - Trip
+        - Matching
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 5001
+      responses:
+        '200':
+          description: Đã bắt đầu quá trình tìm tài xế.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Hệ thống đang tìm tài xế phù hợp."
+                  data:
+                    type: object
+                    properties:
+                      tripId:
+                        type: integer
+                        example: 5001
+                      tripStatus:
+                        type: string
+                        example: "Searching"
+                      searchingStartedAt:
+                        type: string
+                        format: date-time
+                        example: "2026-09-16T15:13:00Z"
+        '400':
+          description: Dữ liệu đầu vào không hợp lệ hoặc chuyến không ở trạng thái Searching.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Chưa đăng nhập hoặc token không hợp lệ.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Không tìm thấy chuyến với tripId tương ứng.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Lỗi nội bộ hệ thống.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        errorCode:
+          type: string
+          example: "TRIP_NOT_IN_SEARCHING_STATUS"
+        message:
+          type: string
+          example: "Chuyến không ở trạng thái đang tìm tài xế."
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-09-16T15:13:00Z"
